@@ -1,0 +1,357 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>postSTL学习（1）——空间配置器 | HXY‘S Blog</title><meta name="author" content="贺昕怡"><meta name="copyright" content="贺昕怡"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一、空间配置器的标准接口1.标准接口可以分为4部分：①typedef 设定的适用于模板新命名：allocator::value_type    allocator::size_typeallocator::difference_type &#x2F;&#x2F;表示两个迭代器之间的距离allocator::pointerallocator::const_pointerallocator::referencealloc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="postSTL学习（1）——空间配置器">
+<meta property="og:url" content="http://example.com/post/5bc6679c.html">
+<meta property="og:site_name" content="HXY‘S Blog">
+<meta property="og:description" content="一、空间配置器的标准接口1.标准接口可以分为4部分：①typedef 设定的适用于模板新命名：allocator::value_type    allocator::size_typeallocator::difference_type &#x2F;&#x2F;表示两个迭代器之间的距离allocator::pointerallocator::const_pointerallocator::referencealloc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png">
+<meta property="article:published_time" content="2023-05-13T09:11:37.000Z">
+<meta property="article:modified_time" content="2023-05-13T09:49:26.072Z">
+<meta property="article:author" content="贺昕怡">
+<meta property="article:tag" content="STL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/post/5bc6679c.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: 贺昕怡","link":"链接: ","source":"来源: HXY‘S Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  }
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'postSTL学习（1）——空间配置器',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-05-13 17:49:26'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://w.wallhaven.cc/full/l8/wallhaven-l8wzr2.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">1</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png')"><nav id="nav"><span id="blog-info"><a href="/" title="HXY‘S Blog"><img class="site-icon" src="https://w.wallhaven.cc/full/zy/wallhaven-zyq7wj.png"/><span class="site-name">HXY‘S Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">postSTL学习（1）——空间配置器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-05-13T09:11:37.000Z" title="发表于 2023-05-13 17:11:37">2023-05-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-05-13T09:49:26.072Z" title="更新于 2023-05-13 17:49:26">2023-05-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/STL/">STL</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="postSTL学习（1）——空间配置器"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="一、空间配置器的标准接口"><a href="#一、空间配置器的标准接口" class="headerlink" title="一、空间配置器的标准接口"></a>一、空间配置器的标准接口</h1><h2 id="1-标准接口可以分为4部分："><a href="#1-标准接口可以分为4部分：" class="headerlink" title="1.标准接口可以分为4部分："></a>1.标准接口可以分为4部分：</h2><h3 id="①typedef-设定的适用于模板新命名："><a href="#①typedef-设定的适用于模板新命名：" class="headerlink" title="①typedef 设定的适用于模板新命名："></a>①typedef 设定的适用于模板新命名：</h3><figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">allocator::value_type</span><br><span class="line">    </span><br><span class="line">allocator::size_type</span><br><span class="line"></span><br><span class="line">allocator::difference_type <span class="comment">//表示两个迭代器之间的距离</span></span><br><span class="line"></span><br><span class="line">allocator::pointer</span><br><span class="line"></span><br><span class="line">allocator::const_pointer</span><br><span class="line"></span><br><span class="line">allocator::reference</span><br><span class="line"></span><br><span class="line">allocator::const_reference</span><br></pre></td></tr></table></figure>
+
+<h3 id="②返回对象的地址："><a href="#②返回对象的地址：" class="headerlink" title="②返回对象的地址："></a>②返回对象的地址：</h3><figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">pointer <span class="title">allocator::address</span><span class="params">(reference x)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">const_pointer <span class="title">allocator::address</span><span class="params">(const_reference x)</span> <span class="type">const</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="③构造和析构函数："><a href="#③构造和析构函数：" class="headerlink" title="③构造和析构函数："></a>③构造和析构函数：</h3><figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">allocator::rebind  <span class="comment">/*拥有唯一成员other,函数功能：rebind的本质应该这么说:给定了类型T的分配                  Allocator=allocator&lt;T&gt;，现在想根据相同的策略得到另外一个类型U的分配器allocator&lt;U&gt;，allocator&lt;U&gt;=allocator&lt;T&gt;::Rebind&lt;U&gt;::other. */</span></span><br><span class="line"></span><br><span class="line">allocator::<span class="built_in">allocator</span>()  <span class="comment">//默认构造函数</span></span><br><span class="line"></span><br><span class="line">allocator::<span class="built_in">allocator</span>(<span class="type">const</span> allocator&amp;)  <span class="comment">//默认拷贝构造函数</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">U</span>&gt;allocator::<span class="built_in">allocator</span>(<span class="type">const</span> allocator&lt;U&gt;&amp;) <span class="comment">//泛化的拷贝构造函数</span></span><br><span class="line"></span><br><span class="line">allocator::~<span class="built_in">allocator</span>()  <span class="comment">//默认析构函数</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="④内存分配和释放"><a href="#④内存分配和释放" class="headerlink" title="④内存分配和释放"></a>④内存分配和释放</h3><figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">//配置存够存储n个T对象的空间，第二个参数是提示，实现上可能会利用它来增进区域，或者完全忽略也行</span></span><br><span class="line"><span class="function">pointer <span class="title">allocator::allocator</span><span class="params">(size_type n,<span class="type">const</span> <span class="type">void</span>* = <span class="number">0</span>)</span> </span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">/*归还先前配置的空间,P必须是由allocate 或者 allocate_at_least分配的(C++23)</span></span></span><br><span class="line"><span class="comment"><span class="function">n必须是第一次分配时给的空间n,或者当p是由allocate_at_least(m)获得的，分配函数返回&#123;p,count&#125;，n是在[m,count]内,否则操作未定义。*/</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">allocator::deallocate</span><span class="params">(pointer p,size_type n)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">//返回可成功配置的最大量</span></span></span><br><span class="line"><span class="function">size_type <span class="title">allocator::max_size</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">//用new，在P所指的未初始化存储中构造T类型的对象。C++20弃用。相当于new( (void*) P ) T(x)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">allocator::construct</span><span class="params">(pointer p,<span class="type">const</span> T&amp; x)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">//等同于p-&gt;~T() 销毁相应内存上的内容（但销毁后内存地址仍保留）</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">allocator::destroy</span><span class="params">(pointer p)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">/* 功能重复,所以没有必要保留这些成员函数,allocator_traits::construct的内部其实就是使用了一个placement new来进行构造,在有了分配的内存以后其实与默认的成员construct没有什么区别 */</span></span></span><br><span class="line"><span class="function"></span></span><br></pre></td></tr></table></figure>
+
+<h2 id="2-一个简单的空间配置器"><a href="#2-一个简单的空间配置器" class="headerlink" title="2.一个简单的空间配置器"></a>2.一个简单的空间配置器</h2><h3 id="①分配空间——直接分配"><a href="#①分配空间——直接分配" class="headerlink" title="①分配空间——直接分配"></a>①分配空间——直接分配</h3><p><img src="/post/5bc6679c/image-20230513110928060.png" alt="image-20230513110928060"></p>
+<p><strong>注释：</strong></p>
+<ul>
+<li><code>set_new_handler(0)</code>:如果打算new一块新内存，内存不够的话，会默认抛出<code>std::bad_alloc</code>异常，不想让它抛出异常，而是想让自己写的程序处理异常，可以使用<code>new_handle</code>指向写的内存不够处理程序，如果将其设置为0，强制C++认为没有自定义内存不够处理函数，若发生异常，抛出<code>std::bad_alloc</code>。</li>
+</ul>
+<h3 id="①分配空间——构造对象"><a href="#①分配空间——构造对象" class="headerlink" title="①分配空间——构造对象"></a>①分配空间——构造对象</h3><p><img src="/post/5bc6679c/image-20230513111527633.png" alt="image-20230513111527633"></p>
+<p><strong>注释：1.区分<code>new/delete</code> 和 <code>operator new/operator delete</code></strong></p>
+<ol>
+<li><code>new operator</code> 就是new操作符，相当于调用<code>operator new</code>来分配足够的空间，并调用相关对象的构造函数。</li>
+<li><code>operator new</code> 只分配所要求的空间，不调用相关对象的构造函数，当无法满足要求的时候，<code>new_handle</code>或<code>bad_alloc</code>异常会抛出；可以被重载，返回类型必须为<code>void*</code>，第一个参数必须为要求分配空间的大小（字节），类型为<code>size_t</code>，可带其他参数。</li>
+<li><code>placement new</code>  重载的<code>operator new</code>的一个标准、全局的版本。括号里指针指向内存缓冲器，<code>placement new</code>将在这个缓冲器上分配一个对象`，返回值是被构造对象的地址。</li>
+</ol>
+<p><strong>注释：2.<code>new(p) T1(value)</code> 这句代码什么意思？</strong></p>
+<ul>
+<li>指针<code>P</code>所致的内存空间创建一个<code>T1</code>类型的对象，对象的内容是从<code>T2</code>类型转换或来的，因此会隐式调用<code>T1</code>构造函数。就是在已有的空间上重新调整分配的空间，把已有的空间当成一个缓冲区，减少了分配空间所耗费的时间。</li>
+</ul>
+<h3 id="②构建简单的allocator"><a href="#②构建简单的allocator" class="headerlink" title="②构建简单的allocator:"></a>②构建简单的allocator:</h3><p><img src="/post/5bc6679c/image-20230513112815572.png" alt="image-20230513112815572"></p>
+<p><img src="/post/5bc6679c/image-20230513112845703.png" alt="image-20230513112845703"></p>
+<p>使用了在同一个<code>namespace JJ</code>的前4个函数。</p>
+<h1 id="二、具备次配置力的SGI空间配置器"><a href="#二、具备次配置力的SGI空间配置器" class="headerlink" title="二、具备次配置力的SGI空间配置器"></a>二、具备次配置力的SGI空间配置器</h1><ul>
+<li><code>SGL</code>的配置器名称为 <code>alloc</code>，而不是<code>allocator</code>，并且不接受任何参数。<code>SGL STL</code>的每一个容器都已经指定了其默认的配置器为<code>alloc</code>。</li>
+<li><code>SGI</code>也定义了一个符合标准、名为<code>allocator</code>的配置器，但因为效率不佳，<code>SGI</code> 从未使用它，也不推荐大家使用。</li>
+</ul>
+<h2 id="1-SGI特殊的配置器——std-alloc"><a href="#1-SGI特殊的配置器——std-alloc" class="headerlink" title="1.SGI特殊的配置器——std::alloc"></a>1.<code>SGI</code>特殊的配置器——<code>std::alloc</code></h2><ul>
+<li><p>对于<code>SGI</code>中的<code>allocator</code>,配置器内存配置和释放行为只是<code>operator new</code> 和 <code>operator delete</code>的一层包装，并没有考虑效率上强化。</p>
+</li>
+<li><p>在C++中，一般内存配置和释放操作是这样的：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Foo</span> &#123;...&#125;;</span><br><span class="line">Foo* pf = <span class="keyword">new</span> Foo;</span><br><span class="line"><span class="keyword">delete</span> pf;</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>new</code>包含两段操作：（1）调用<code>::operator new</code>配置内存 （2）调用<code>Foo::Foo()</code>构造对象的内容；<code>delete</code>同样包含两阶段操作：（1）调用类的析构函数将对象析构 （2）调用<code>operator::delete</code>释放内存。</p>
+</li>
+<li><p><code>STL::allocator</code>将这两阶段操作分开，内存配置由<code>alloc::allocate()</code>负责，内存释放由<code>alloc::deallocate()</code>负责；对象构造函数由<code>::construct()</code>负责，对象析构由<code>::destroy()</code>负责。</p>
+</li>
+</ul>
+<p><img src="/post/5bc6679c/image-20230513131133398.png" alt="image-20230513131133398"></p>
+<h2 id="2-构造和析构的基本工具：construct-和destroy"><a href="#2-构造和析构的基本工具：construct-和destroy" class="headerlink" title="2.构造和析构的基本工具：construct()和destroy()"></a>2.构造和析构的基本工具：construct()和destroy()</h2><h3 id="1-构造函数"><a href="#1-构造函数" class="headerlink" title="1.构造函数"></a>1.构造函数</h3><p><img src="/post/5bc6679c/image-20230513131613843.png" alt="image-20230513131613843"></p>
+<h3 id="2-析构函数"><a href="#2-析构函数" class="headerlink" title="2.析构函数"></a>2.析构函数</h3><h4 id="①第一版"><a href="#①第一版" class="headerlink" title="①第一版"></a>①第一版</h4><p>接受一个指针，将该指针所指对象析构掉。</p>
+<p><img src="/post/5bc6679c/image-20230513131721920.png" alt="image-20230513131721920"></p>
+<h4 id="②第二版"><a href="#②第二版" class="headerlink" title="②第二版"></a>②第二版</h4><p>第二版接受<code>first</code>和<code>last</code>两个迭代器，将<code>[first,last)</code>范围内所有对象析构掉。</p>
+<p><img src="/post/5bc6679c/image-20230513131827264.png" alt="image-20230513131827264"></p>
+<p><strong>解释</strong>：</p>
+<ol>
+<li>如果用户不定义析构函数，则用系统自带的析构函数，这说明析构函数没什么作用，称为<code>trivial_destructor</code>.例如，如果只有基本类型就没必要调用析构函数。</li>
+<li>首先利用<code>value_type()</code> 获得迭代器所指对象的性别——&gt;再利用<code>_type_traits&lt;T&gt;</code>判断该型别析构函数是否为<code>trivial</code>——&gt;如果有<code>trivial_destructor</code>，就不需要做什么；如果没有，将<code>first</code>到<code>last</code>内调用<code>destroy()</code>该函数调用对象析构函数)将对象析构掉。</li>
+</ol>
+<p><img src="/post/5bc6679c/image-20230513132340068.png" alt="image-20230513132340068"></p>
+<h2 id="3-空间的配置与释放，std-alloc"><a href="#3-空间的配置与释放，std-alloc" class="headerlink" title="3.空间的配置与释放，std::alloc"></a>3.空间的配置与释放，std::alloc</h2><ul>
+<li><p><code>SGI</code>以<code>malloc()</code>和<code>free()</code>完成内存的配置与释放。考虑到小型区块可能造成的内存破碎问题，<code>SGI</code>设计了双层配置器，第一级配置器统一使用<code>malloc()</code>和<code>free()</code>,第二级配置器根据配置大小选择使用内存池或第一级配置器。</p>
+</li>
+<li><p>开放第一级还是第二级配置器取决于<code>_USE_MALLOC</code>是否被定义。</p>
+<p><img src="/post/5bc6679c/image-20230513133423468.png" alt="image-20230513133423468"></p>
+</li>
+<li><p><code>SGI</code>为<code>alloc</code>再包装一个接口，使得配置器的接口能够符合<code>STL</code>规格：</p>
+<p><img src="/post/5bc6679c/image-20230513133620921.png" alt="image-20230513133620921"></p>
+</li>
+</ul>
+<p><img src="/post/5bc6679c/image-20230513133738186.png" alt="image-20230513133738186"></p>
+<p><img src="/post/5bc6679c/image-20230513133822305.png" alt="image-20230513133822305"></p>
+<p>为什么要有接口？为了能统一使用这些函数，不然第一级和第二级配置器不同，每次都要单独设置，非常麻烦。</p>
+<h3 id="1-第一级配置器"><a href="#1-第一级配置器" class="headerlink" title="1.第一级配置器"></a>1.第一级配置器</h3><ul>
+<li><code>SGI</code>使用<code>malloc</code>而不是<code>operator new</code>来配置内存，还有一个原因是C++未提供相应于<code>realloc()</code>的内存配置；<code>SGI</code>不能直接使用C++的<code>set_new_handler()</code>，必须仿真一个类似的<code>set_malloc_handler()</code>。</li>
+<li><code>SGI</code>第一级配置器的<code>allocate()</code>和<code>realloc()</code>都是再调用<code>malloc()</code>和<code>realloc()</code>不成功后，改为调用<code>oom_alloc()</code>和<code>oom_realloc()</code>,后两者都有内循环，不断调用“内存不足处理程序”，期望在某次调用之后，能够获得足够内存而圆满完成任务，如果“内存不足处理程序”没有被设定，将直接调用<code>_THROW_BAD_ALLOC</code>,丢出<code>bad_alloc</code> 异常信息，或利用<code>exit(1)</code>直接中止程序。</li>
+</ul>
+<ol>
+<li><p>正常配置和删除内存：</p>
+<p><img src="/post/5bc6679c/image-20230513142107784.png" alt="image-20230513142107784"></p>
+</li>
+<li><p>内存不足转而调用的程序:</p>
+<p><img src="/post/5bc6679c/image-20230513142307438.png" alt="image-20230513142307438"></p>
+</li>
+</ol>
+<p><img src="/post/5bc6679c/image-20230513142334091.png" alt="image-20230513142334091"></p>
+<p>3.<img src="/post/5bc6679c/image-20230513142428400.png" alt="image-20230513142428400"></p>
+<p><img src="/post/5bc6679c/image-20230513142628210.png" alt="image-20230513142628210"></p>
+<p><img src="/post/5bc6679c/image-20230513143716475.png" alt="image-20230513143716475"></p>
+<p>使用<code>template</code>的非类型参数可以自动帮我们获取参数的大小, 省去手动传入参数大小的麻烦等问题. 记住 : 非类型模板参数在编译期间就已经实例化, 所以其模板实参必须是常量表达式.</p>
+<h3 id="2-第二级配置器"><a href="#2-第二级配置器" class="headerlink" title="2.第二级配置器"></a>2.第二级配置器</h3><ul>
+<li><p>小额区块带来的问题不仅仅是内存碎片，配置时额外负担也是个大问题，额外负担不可避免，因为系统要靠多出来的空间来管理内存。</p>
+</li>
+<li><p><code>SGI</code>第二级配置的做法是：当区块超过128 bytes 时，移交给第一级配置器处置，当区块小于 128 bytes 时，以内存池管理：每次配置一块内存，并维护对应的自由链表，若下次再有相同的内存需求，就直接从<code>free-lists</code>中拨出。如果客端释放小额区块， <code>SGI</code>第二级配置器会主动将任何小额区块的内存需求上调至8的倍数，回收到<code> free-lists</code>中。</p>
+</li>
+<li><p><code>SGI</code>配置器维护了16个 <code>free-lists</code>,各自管理大小分别为8，16，24，32，40，48，56，64，72，80，88，96，104，112，120，128 bytes的小额区块。</p>
+</li>
+<li><p><code>free-lists</code>的节点结构如下：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">union</span> <span class="title class_">obj</span>&#123;</span><br><span class="line">	<span class="keyword">union</span> <span class="title class_">obj</span>* free_list_link;</span><br><span class="line">	<span class="type">char</span> client_data[<span class="number">1</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>维护链表，每个节点需要额外的指针，这会造成额外的负担，但是这里 <code>obj</code>采用的是union,union类似struct，只是其中变量所占空间是重叠的。<code>free_list_link</code>和 <code>client_data</code>占据同一块大小为4 bytes内存空间。<code>client_data</code>始终作为一个并不占据内存的常指针存在，形式上将开头1 byte内存划分给它，但它并不使用。这样的话，<code>obj</code>可被视作一个指向下一个 <code>obj</code> 的指针，也可以被看作一个指向实际区块的指针，实现了一物两用。</p>
+</li>
+<li><p>第二级配置器的部分内容：</p>
+<p>常量部分：</p>
+<p><img src="/post/5bc6679c/image-20230513150233014.png" alt="image-20230513150233014"></p>
+<ol>
+<li><p>上调8的倍数，两数求和与第二个数-1的补码做与运算</p>
+<p><img src="/post/5bc6679c/image-20230513145718011.png" alt="image-20230513145718011"></p>
+</li>
+<li><p>free-lists构造</p>
+<p><img src="/post/5bc6679c/image-20230513150354221.png" alt="image-20230513150354221"></p>
+</li>
+<li><p>配置空间</p>
+<p><img src="/post/5bc6679c/image-20230513150606449.png" alt="image-20230513150606449"></p>
+</li>
+<li><p>static data member定义和初值</p>
+<p><img src="/post/5bc6679c/image-20230513150649322.png" alt="image-20230513150649322"></p>
+</li>
+<li><p>三个配置接口</p>
+<p><img src="/post/5bc6679c/image-20230513150707584.png" alt="image-20230513150707584"></p>
+</li>
+</ol>
+</li>
+</ul>
+<h3 id="1-空间配置函数-allocate"><a href="#1-空间配置函数-allocate" class="headerlink" title="1.空间配置函数 allocate()"></a>1.空间配置函数 <code>allocate</code>()</h3><p>首先判断区块大小——&gt;小于128检查对应的<code>free-list</code>,如果有可用区块，直接用，否则将区块大小上调至8的倍数，调用 <code>refill()</code>,为free list重新填充空间。</p>
+<p><img src="/post/5bc6679c/image-20230513153015797.png" alt="image-20230513153015797"></p>
+<p><img src="/post/5bc6679c/image-20230513153109077.png" alt="image-20230513153109077"></p>
+<p><img src="/post/5bc6679c/image-20230513153140590.png" alt="image-20230513153140590"></p>
+<h3 id="2-空间释放函数-deallocate"><a href="#2-空间释放函数-deallocate" class="headerlink" title="2.空间释放函数 deallocate()"></a>2.空间释放函数 <code>deallocate()</code></h3><p>首先判断大小——&gt; 小于128找到对应的<code>free-list</code>,将区块回收。</p>
+<p><img src="/post/5bc6679c/image-20230513153501178.png" alt="image-20230513153501178"></p>
+<p><img src="/post/5bc6679c/image-20230513153519856.png" alt="image-20230513153519856"></p>
+<h3 id="3-重新填充-free-lists"><a href="#3-重新填充-free-lists" class="headerlink" title="3.重新填充 free lists"></a>3.重新填充 <code>free lists</code></h3><ul>
+<li><p><code>refill()</code>函数为 <code>free list</code>重新填充空间，新的空间取自内存池（由 <code>chunk_alloc()</code>完成）。默认取得20个新节点，如果内存池空间不足，获得的节点数可能小于20个。</p>
+<p><img src="/post/5bc6679c/image-20230513154057787.png" alt="image-20230513154057787"></p>
+</li>
+</ul>
+<p><img src="/post/5bc6679c/image-20230513154122894.png" alt="image-20230513154122894"></p>
+<ul>
+<li>如果只获得1个区块，这个区块分配给调用者，<code>free list</code>无新节点</li>
+<li>否则调整 <code>free list</code> ，纳入新节点 ，chunk指针第一块内存返回给客端，其他多分的内存空间串起来，到最后一个空间跳出来，跳出循环。</li>
+</ul>
+<h3 id="4-内存池"><a href="#4-内存池" class="headerlink" title="4.内存池"></a>4.内存池</h3><ul>
+<li><p>从内存池取空间给 <code>free list</code> 使用，是 <code>chunk_alloc()</code>的工作。nobjs是引用传递，因为要返回能分配的大小。</p>
+</li>
+<li><p>如果内存池剩余空间充足，返回默认值20，并分配20个相应的内存空间；</p>
+</li>
+<li><p>如果内存池空间不能完全满足要求，能提供多少，提供多少，至少大于1，返回指向相应内存的指针；</p>
+</li>
+<li><p>如果内存池连一个区块的大小都无法供应，首先试着让内存池寻找残余零头，，将其编入 <code>free list</code>空间，配置<code>heap</code>空间，补充内存池，补充大小为所需大小的2倍 加上随配置次数越来越大的附加量。</p>
+</li>
+<li><p>如果 <code>heap</code>空间不足，<code>malloc</code>失败，搜索当前有没有尚未用区块，且区块足够大的 <code>free list</code>，将其释放出来，在这里使用。同时要递归调用自己，为了修正<code>nobjs</code>的值。</p>
+</li>
+<li><p>还不行，调用第一级配置器，获取我们想要的 空间大小，这将导致抛出异常，或者内存不足情况得到改善，更新<code>heap_size</code> 和 <code>nobjs</code>的值。</p>
+<p><img src="/post/5bc6679c/image-20230513161100781.png" alt="image-20230513161100781"></p>
+</li>
+</ul>
+<p><img src="/post/5bc6679c/image-20230513161130853.png" alt="image-20230513161130853"></p>
+<p><img src="/post/5bc6679c/image-20230513161153160.png" alt="image-20230513161153160"></p>
+<p><img src="/post/5bc6679c/image-20230513161210060.png" alt="image-20230513161210060"></p>
+<h1 id="三、内存基本处理工具"><a href="#三、内存基本处理工具" class="headerlink" title="三、内存基本处理工具"></a>三、内存基本处理工具</h1><ul>
+<li>STL定义5个全局函数，作用于未初始化空间上，包括了用于构造的<code>construct()</code>和用于析构的<code>destroy()</code>,还有3个函数。</li>
+</ul>
+<h2 id="1-uninitialized-copy"><a href="#1-uninitialized-copy" class="headerlink" title="1.uninitialized_copy"></a>1.<code>uninitialized_copy</code></h2><ul>
+<li><p>使内存配置和对象构造行为分开，如果输出目的地每一个迭代器指向未初始化的区域，则该函数会使用<code>copy constructor()</code>给每一个对象产生一个复制品。</p>
+</li>
+<li><p>该函数要么构造出所有必要元素，要么不构造任何东西。</p>
+</li>
+<li><p><code>POD</code>类型：指<code>Plain Old Data</code>,也就是标量型别 或者是传统的<code>C struct</code>型别，POD必然拥有 <code>trivial ctor /dtor/copy/ssignment</code>函数，因此我们可以对POD型别采用最有效率的初值填写手法，而对non-POD采取最保险安全的做法。</p>
+</li>
+<li><p>首先萃取出迭代器的value_type——&gt;判断该型别是否是POD类型——&gt;直接填充/调用高阶函数执行</p>
+<p><img src="/post/5bc6679c/image-20230513165555543.png" alt="image-20230513165555543"></p>
+<p><img src="/post/5bc6679c/image-20230513165146766.png" alt="image-20230513165146766"></p>
+<p><img src="/post/5bc6679c/image-20230513165204524.png" alt="image-20230513165204524"></p>
+</li>
+</ul>
+<h2 id="2-uninitialized-fill"><a href="#2-uninitialized-fill" class="headerlink" title="2.uninitialized_fill"></a>2.<code>uninitialized_fill</code></h2><ul>
+<li><p>使内存配置和对象构造行为分开，如果输出目的地每一个迭代器指向未初始化的区域，<code>uninitialized_fill()</code> 会给每一个对象产生参数x的复制品`。</p>
+</li>
+<li><p>该函数要么构造出所有必要元素，要么不构造任何东西。</p>
+</li>
+<li><p>首先萃取出迭代器的value_type——&gt;判断该型别是否是POD类型——&gt;直接填充/调用高阶函数执行</p>
+<p><img src="/post/5bc6679c/image-20230513165645159.png" alt="image-20230513165645159"></p>
+<p><img src="/post/5bc6679c/image-20230513165117968.png" alt="image-20230513165117968"></p>
+</li>
+</ul>
+<h2 id="3-uninitialized-fill-n"><a href="#3-uninitialized-fill-n" class="headerlink" title="3.uninitialized_fill_n"></a>3.<code>uninitialized_fill_n</code></h2><ul>
+<li><p>使内存配置和对象构造行为分开，如果输出目的地每一个迭代器指向未初始化的区域，<code>uninitialized_fill()</code> 会给<code>[first,first+n)</code>每一个对象产生参数x的复制品`。</p>
+</li>
+<li><p>该函数要么构造出所有必要元素，要么不构造任何东西。</p>
+</li>
+<li><p>首先萃取出迭代器的value_type——&gt;判断该型别是否是POD类型——&gt;直接填充/调用高阶函数执行</p>
+<p><img src="/post/5bc6679c/image-20230513164922719.png" alt="image-20230513164922719"></p>
+</li>
+</ul>
+<p><img src="/post/5bc6679c/image-20230513164941918.png" alt="image-20230513164941918"></p>
+<p><img src="/post/5bc6679c/image-20230513164954028.png" alt="image-20230513164954028"></p>
+<p><img src="/post/5bc6679c/image-20230513165015047.png" alt="image-20230513165015047"></p>
+<p><strong>总结：</strong></p>
+<p><img src="/post/5bc6679c/image-20230513165739896.png" alt="image-20230513165739896"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="http://example.com">贺昕怡</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://example.com/post/5bc6679c.html">http://example.com/post/5bc6679c.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://example.com" target="_blank">HXY‘S Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/STL/">STL</a></div><div class="post_share"><div class="social-share" data-image="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/post/d95d7e09.html" title="我的第一篇博客"><img class="cover" src="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">我的第一篇博客</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://w.wallhaven.cc/full/l8/wallhaven-l8wzr2.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">贺昕怡</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">1</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/he123yi" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://weibo.com/u/7388476371" target="_blank" title="Weibo"><i class="fab fa-weibo" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E7%A9%BA%E9%97%B4%E9%85%8D%E7%BD%AE%E5%99%A8%E7%9A%84%E6%A0%87%E5%87%86%E6%8E%A5%E5%8F%A3"><span class="toc-number">1.</span> <span class="toc-text">一、空间配置器的标准接口</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A0%87%E5%87%86%E6%8E%A5%E5%8F%A3%E5%8F%AF%E4%BB%A5%E5%88%86%E4%B8%BA4%E9%83%A8%E5%88%86%EF%BC%9A"><span class="toc-number">1.1.</span> <span class="toc-text">1.标准接口可以分为4部分：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A0typedef-%E8%AE%BE%E5%AE%9A%E7%9A%84%E9%80%82%E7%94%A8%E4%BA%8E%E6%A8%A1%E6%9D%BF%E6%96%B0%E5%91%BD%E5%90%8D%EF%BC%9A"><span class="toc-number">1.1.1.</span> <span class="toc-text">①typedef 设定的适用于模板新命名：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A1%E8%BF%94%E5%9B%9E%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%9C%B0%E5%9D%80%EF%BC%9A"><span class="toc-number">1.1.2.</span> <span class="toc-text">②返回对象的地址：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A2%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0%EF%BC%9A"><span class="toc-number">1.1.3.</span> <span class="toc-text">③构造和析构函数：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A3%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%92%8C%E9%87%8A%E6%94%BE"><span class="toc-number">1.1.4.</span> <span class="toc-text">④内存分配和释放</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E7%A9%BA%E9%97%B4%E9%85%8D%E7%BD%AE%E5%99%A8"><span class="toc-number">1.2.</span> <span class="toc-text">2.一个简单的空间配置器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A0%E5%88%86%E9%85%8D%E7%A9%BA%E9%97%B4%E2%80%94%E2%80%94%E7%9B%B4%E6%8E%A5%E5%88%86%E9%85%8D"><span class="toc-number">1.2.1.</span> <span class="toc-text">①分配空间——直接分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A0%E5%88%86%E9%85%8D%E7%A9%BA%E9%97%B4%E2%80%94%E2%80%94%E6%9E%84%E9%80%A0%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.2.2.</span> <span class="toc-text">①分配空间——构造对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%91%A1%E6%9E%84%E5%BB%BA%E7%AE%80%E5%8D%95%E7%9A%84allocator"><span class="toc-number">1.2.3.</span> <span class="toc-text">②构建简单的allocator:</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%B7%E5%A4%87%E6%AC%A1%E9%85%8D%E7%BD%AE%E5%8A%9B%E7%9A%84SGI%E7%A9%BA%E9%97%B4%E9%85%8D%E7%BD%AE%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">二、具备次配置力的SGI空间配置器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-SGI%E7%89%B9%E6%AE%8A%E7%9A%84%E9%85%8D%E7%BD%AE%E5%99%A8%E2%80%94%E2%80%94std-alloc"><span class="toc-number">2.1.</span> <span class="toc-text">1.SGI特殊的配置器——std::alloc</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%B7%A5%E5%85%B7%EF%BC%9Aconstruct-%E5%92%8Cdestroy"><span class="toc-number">2.2.</span> <span class="toc-text">2.构造和析构的基本工具：construct()和destroy()</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="toc-number">2.2.1.</span> <span class="toc-text">1.构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0"><span class="toc-number">2.2.2.</span> <span class="toc-text">2.析构函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%91%A0%E7%AC%AC%E4%B8%80%E7%89%88"><span class="toc-number">2.2.2.1.</span> <span class="toc-text">①第一版</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%91%A1%E7%AC%AC%E4%BA%8C%E7%89%88"><span class="toc-number">2.2.2.2.</span> <span class="toc-text">②第二版</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E7%A9%BA%E9%97%B4%E7%9A%84%E9%85%8D%E7%BD%AE%E4%B8%8E%E9%87%8A%E6%94%BE%EF%BC%8Cstd-alloc"><span class="toc-number">2.3.</span> <span class="toc-text">3.空间的配置与释放，std::alloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%AC%AC%E4%B8%80%E7%BA%A7%E9%85%8D%E7%BD%AE%E5%99%A8"><span class="toc-number">2.3.1.</span> <span class="toc-text">1.第一级配置器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%AC%AC%E4%BA%8C%E7%BA%A7%E9%85%8D%E7%BD%AE%E5%99%A8"><span class="toc-number">2.3.2.</span> <span class="toc-text">2.第二级配置器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%A9%BA%E9%97%B4%E9%85%8D%E7%BD%AE%E5%87%BD%E6%95%B0-allocate"><span class="toc-number">2.3.3.</span> <span class="toc-text">1.空间配置函数 allocate()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%A9%BA%E9%97%B4%E9%87%8A%E6%94%BE%E5%87%BD%E6%95%B0-deallocate"><span class="toc-number">2.3.4.</span> <span class="toc-text">2.空间释放函数 deallocate()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%87%8D%E6%96%B0%E5%A1%AB%E5%85%85-free-lists"><span class="toc-number">2.3.5.</span> <span class="toc-text">3.重新填充 free lists</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%86%85%E5%AD%98%E6%B1%A0"><span class="toc-number">2.3.6.</span> <span class="toc-text">4.内存池</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%86%85%E5%AD%98%E5%9F%BA%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7"><span class="toc-number">3.</span> <span class="toc-text">三、内存基本处理工具</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-uninitialized-copy"><span class="toc-number">3.1.</span> <span class="toc-text">1.uninitialized_copy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-uninitialized-fill"><span class="toc-number">3.2.</span> <span class="toc-text">2.uninitialized_fill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-uninitialized-fill-n"><span class="toc-number">3.3.</span> <span class="toc-text">3.uninitialized_fill_n</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/post/5bc6679c.html" title="postSTL学习（1）——空间配置器"><img src="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="postSTL学习（1）——空间配置器"/></a><div class="content"><a class="title" href="/post/5bc6679c.html" title="postSTL学习（1）——空间配置器">postSTL学习（1）——空间配置器</a><time datetime="2023-05-13T09:11:37.000Z" title="发表于 2023-05-13 17:11:37">2023-05-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/post/d95d7e09.html" title="我的第一篇博客"><img src="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="我的第一篇博客"/></a><div class="content"><a class="title" href="/post/d95d7e09.html" title="我的第一篇博客">我的第一篇博客</a><time datetime="2023-05-06T08:08:21.000Z" title="发表于 2023-05-06 16:08:21">2023-05-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/post/4a17b156.html" title="Hello World"><img src="https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/post/4a17b156.html" title="Hello World">Hello World</a><time datetime="2023-05-06T02:37:12.583Z" title="发表于 2023-05-06 10:37:12">2023-05-06</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://w.wallhaven.cc/full/vq/wallhaven-vqyxzp.png')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2023 By 贺昕怡</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="fluttering_ribbon" mobile="true" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
